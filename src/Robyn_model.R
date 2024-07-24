@@ -82,10 +82,33 @@ OutputCollect <- robyn_outputs(
 )
 print(OutputCollect)
 
-model_no <- "1_618_4"
+model_no <- "4_473_5"
 ExportedModel <- robyn_write(InputCollect, OutputCollect,
                              model_no, export = FALSE)
 
 # if each parameter is closer to simulated data parameters,
 # Robyn is accurate the media parameters.
 print(ExportedModel)
+
+# [1] "roi of Channel_01 is: 2.90889964244781"
+# [1] "roi of Channel_02 is: 67.6262704285043"
+# [1] "roi of Channel_03 is: 14.2904166234131"
+# [1] "roi of Search is     : 5.25751787085714"
+
+# Summary Values on Selected Model:
+#           variable    coef decompPer decompAgg    ROI mean_response mean_spend
+# 1      (Intercept)  1.714M     3.86%   178.22M      -             -          -
+# 2            trend   0.518    51.91%    2.397B      -             -          -
+# 3           season    0.35     0.00%   175.49K      -             -          -
+# 4 spend_Channel_01  8.313M    10.40%   480.53M  5.557        4.629M    831.52K
+# 5 spend_Channel_02 22.272M    22.59%    1.043B 20.788       10.016M    482.51K
+# 6 spend_Channel_03 10.396M    11.09%    512.4M  16.09        4.931M     306.2K
+# 7     spend_Search 173.93K     0.14%    6.602M  0.494       77.849K    128.42K
+
+# Hyper-parameters:
+#     Adstock: geometric   2       0.5        0.3
+#            channel    alphas    gammas    thetas
+# 1 spend_Channel_01 0.6428098 0.3599642 0.4958000
+# 2 spend_Channel_02 2.9734200 0.9671084 0.1004090
+# 3 spend_Channel_03 1.0330570 0.9809159 0.1006910
+# 4     spend_Search 3.9117300 0.8677973 0.4999715
