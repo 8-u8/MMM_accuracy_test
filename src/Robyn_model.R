@@ -7,35 +7,51 @@ system("pipenv --venv", inter = TRUE)
 output <- "./output/"
 
 sim_data <- read_csv("./input/simulated_data.csv") |> 
-  na.omit()
+  na.omit() |> 
+  dplyr::mutate(
+    clicks_Search = if_else(clicks_Search <= 0, 0, clicks_Search)
+  )
 holiday_data <- read_csv("./input/generated_holidays.csv") |> 
   na.omit()
 
 InputCollect <- Robyn::robyn_inputs(
   dt_input = sim_data,
   dt_holidays = holiday_data,
+  # assume Japanese holiday
   prophet_country = "JP",
   date_var = "DATE",
   dep_var = "total_revenue",
   dep_var_type = "revenue",
   prophet_vars = c("trend", "season"),
-  paid_media_spends = c("spend_TV", "spend_Facebook", "spend_Search"),
-  paid_media_vars = c("impressions_TV", "impressions_Facebook", "clicks_Search"),
+  paid_media_spends = c("spend_Channel_01",
+                        "spend_Channel_02",
+                        "spend_Channel_03",
+                        "spend_Search"),
+  paid_media_vars = c("impressions_Channel_01",
+                      "impressions_Channel_02",
+                      "impressions_Channel_03",
+                      "clicks_Search"),
   adstock = "geometric"
 )
 
 
 hyperparameters <- list(
-  spend_Facebook_alphas = c(0.5, 3),
-  spend_Facebook_gammas = c(0.3, 1),
-  spend_Facebook_thetas = c(0, 0.3),
-  spend_TV_alphas = c(0.5, 3),
-  spend_TV_gammas = c(0.3, 1),
-  spend_TV_thetas = c(0.3, 0.8),
-  spend_Search_alphas = c(0.5, 3),
-  spend_Search_gammas = c(0.3, 1),
-  spend_Search_thetas = c(0, 0.3),
-  train_size = c(0.5, 0.8)
+  spend_Channel_01_alphas = c(0.5, 4.0), # simulated: 2
+  spend_Channel_01_gammas = c(0.3, 1.0), # simulated: 0.5
+  spend_Channel_01_thetas = c(0.1, 0.5), # simulated: 0.3
+
+  spend_Channel_02_alphas = c(0.5, 3.0), # simulated: 2
+  spend_Channel_02_gammas = c(0.3, 1.0), # simulated: 0.5
+  spend_Channel_02_thetas = c(0.1, 0.5), # simulated: 0.3
+  
+  spend_Channel_03_alphas = c(0.5, 4.0), # simulated: 2
+  spend_Channel_03_gammas = c(0.3, 1.0), # simulated: 0.5
+  spend_Channel_03_thetas = c(0.1, 0.5), # simulated: 0.3
+  
+  spend_Search_alphas = c(0.5, 4.0),  # simulated: 2
+  spend_Search_gammas = c(0.3, 1.0),  # simulated: 0.5
+  spend_Search_thetas = c(0, 0.5),    # simulated: 0.3
+  train_size = c(0.8, 0.9)
 )
 
 
@@ -69,4 +85,7 @@ print(OutputCollect)
 model_no <- "1_618_4"
 ExportedModel <- robyn_write(InputCollect, OutputCollect,
                              model_no, export = FALSE)
+
+# if each parameter is closer to simulated data parameters,
+# Robyn is accurate the media parameters.
 print(ExportedModel)
