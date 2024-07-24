@@ -47,3 +47,12 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# pipenv files
+Pipfile.lock
+
+# large files
+output/*
+
+# ignore specific data
+/input/generated_holidays.csv
