@@ -10,15 +10,18 @@ from lightweight_mmm import preprocessing
 from lightweight_mmm import utils
 from lightweight_mmm import lightweight_mmm
 from lightweight_mmm import plot
-from lightweight_mmm import optimize_media
-
 # %%
 sim_data = pd.read_csv("./input/simulated_data.csv")
 sim_data = sim_data.dropna(axis=0)
 
+sim_data.loc[sim_data['clicks_Search']<0,'clicks_Search'] = 0
+
 # %% config: set variables
-spend_columns = ['spend_TV', 'spend_Facebook', 'spend_Search']
-media_columns = ['impressions_TV', 'impressions_Facebook', 
+spend_columns = ['spend_Channel_01', 'spend_Channel_02',
+                 'spend_Channel_03', 'spend_Search']
+media_columns = ['impressions_Channel_01',
+                 'impressions_Channel_02',
+                 'impressions_Channel_03',
                  'clicks_Search']
 sales = ['total_revenue']
 
@@ -67,22 +70,20 @@ costs_train = costs_scaler.fit_transform(costs_train)
 cost_test = costs_scaler.transform(costs_test)
 
 # %% find best model
-# carryover model is slow.
+# no scaling fitting to compare to Robyn coefs
 model_name = 'hill_adstock'
-degrees_season = [1, 2, 3]
 
 mmm = lightweight_mmm.LightweightMMM(model_name=model_name)
 mmm.fit(
     media=media_data_train,
-    media_names=['TV', 'Facebook', 'Search'],
+    media_names=['Channel_01', 'Channel_02', 'Channel_03', 'Search'],
     media_prior=costs_train,
     target=target_train,
     number_warmup=1000,
     number_samples=10_000,
     number_chains=5,
-    # degrees_seasonality=degrees,
     weekday_seasonality=True,
-    seasonality_frequency=365,
+    seasonality_frequency=52,
     seed=42
 )
 
@@ -96,14 +97,28 @@ pred = mmm.predict(
 mmm.print_summary()
 
 # %%
-media_effect_hat, roi_hat = mmm.get_posterior_metrics()
+media_effect_hat, roi_hat = mmm.get_posterior_metrics(
+    cost_scaler=costs_scaler,
+    target_scaler=target_scaler
+)
+
 
 # %%
-lambda_table = pd.DataFrame(mmm.trace['lag_weight']._value, columns=mmm.media_names)
-# When I used lightweight MMM on this dataset, 
-# I assumed mmm.trace['lag_weight'] would recover my lambdas. Instead, 
-# I am getting these (relatively) very large values:
-lambda_table.apply(np.mean, axis=0)
+utils.save_model(mmm, "./output/lightweight_mmm_20240725_model.pkl")
 
-# %%
-utils.save_model(mmm, "./output/lightweight_mmm_20240724_model.pkl")
+# how to get media coefs mean?
+pd.DataFrame(
+    {
+        'medial_name': mmm.media_names,
+        'true_ROI': [2.90889964244781, 67.6262704285043,
+                    14.2904166234131, 5.25751787085714],
+        'lmmm_ROI_hat': roi_hat.mean(axis=0),
+        'robyn_ROI_hat': [5.557, 20.778, 16.09, 0.494]
+    }
+)
+
+# 	medial_name	true_ROI	lmmm_ROI_hat    robyn_ROI_hat
+# 	Channel_01	2.908900	17.849827   	5.557
+# 	Channel_02	67.626270	25.900499   	20.778
+# 	Channel_03	14.290417	34.662693   	16.090
+#   	Search	5.257518	51.653549   	0.494
