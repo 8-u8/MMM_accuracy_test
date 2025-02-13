@@ -11,7 +11,7 @@ from lightweight_mmm import utils
 from lightweight_mmm import lightweight_mmm
 from lightweight_mmm import plot
 # %%
-sim_data = pd.read_csv("./input/simulated_data.csv")
+sim_data = pd.read_csv("../input/simulated_data.csv")
 sim_data = sim_data.dropna(axis=0)
 
 sim_data.loc[sim_data['clicks_Search']<0,'clicks_Search'] = 0
@@ -122,3 +122,46 @@ pd.DataFrame(
 # 	Channel_02	67.626270	25.900499   	20.778
 # 	Channel_03	14.290417	34.662693   	16.090
 #   	Search	5.257518	51.653549   	0.494
+
+# %% 
+mmm.trace
+
+# %%
+coef_media = pd.DataFrame(mmm.trace['coef_media'], columns=media_columns)
+coef_media.apply(np.mean, axis=0)
+# %%
+plot.plot_model_fit(mmm)
+# %%
+plot.plot_response_curves(mmm, figure_size=(20,20))
+# %%
+import io
+import csv
+import sys
+
+def capture_print_summary_to_csv(lightweight_mmm_instance, csv_filename="output.csv"):
+    """Captures the output of `print_summary` and saves it to a CSV file."""
+    output_buffer = io.StringIO()
+    original_stdout = sys.stdout  # Save the original stdout
+
+    try:
+        sys.stdout = output_buffer  # Redirect stdout to the buffer
+        lightweight_mmm_instance.print_summary()  # Call the function
+    finally:
+        sys.stdout = original_stdout  # Restore stdout
+
+    # Step 2: Process the captured output
+    captured_output = output_buffer.getvalue()
+    output_buffer.close()
+
+    # Split the captured output into rows (you may need to adapt this for specific formats)
+    rows = [line.split() for line in captured_output.strip().split("\n")]
+
+    # Step 3: Write to a CSV file
+    with open(csv_filename, "w", newline="") as csv_file:
+        writer = csv.writer(csv_file)
+        writer.writerows(rows)
+
+    print(f"Output has been saved to '{csv_filename}'")
+# %%
+capture_print_summary_to_csv(mmm, "test_output.csv")
+# %%

@@ -51,6 +51,13 @@ rsconnect/
 # pipenv files
 Pipfile.lock
 
+# rye and uv file
+requirements-dev.lock
+requirements.lock
+pyproject.toml
+.python-version
+uv.lock
+
 # large files
 output/*
 
